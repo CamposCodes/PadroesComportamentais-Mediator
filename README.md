@@ -35,38 +35,15 @@ Implementação do padrão **Mediator** aplicada a um sistema de bar e cafeteria
 - Interface interativa com visualização em tempo real
 
 Também há uma interface web de demonstração interativa incluída: [Interface de Demonstração](./index.html)
+<p align="center">
+	<img src="./screenshot.png" alt="Captura da interface - Demonstração Mediator" width="900" />
+</p>
 
 ## 📐 Diagrama de Classe <a name="diagrama"></a>
 O diagrama abaixo representa a arquitetura do projeto, enfatizando o padrão **Mediator** como centralizador de comunicação:
-
-```
-                    ┌─────────────┐
-                    │ Funcionario │
-                    └──────┬──────┘
-                           │
-                           │ extends
-                           │
-                    ┌──────▼──────┐
-                    │   Garcom    │
-                    └─────────────┘
-                           │
-                           │ solicita
-                           │
-                    ┌──────▼──────────────┐
-                    │   CozinhaBar        │
-                    │   (Mediador)        │
-                    │  - Singleton        │
-                    └──────┬──────┬──────┬┘
-                           │      │      │
-              ┌────────────┘      │      └────────────┐
-              │                   │                   │
-              ▼                   ▼                   ▼
-         ┌────────┐          ┌────────┐         ┌────────┐
-         │  Bar   │          │Cozinha │         │ Barista│
-         │:Setor  │          │:Setor  │         │:Setor  │
-         │Preparo │          │Preparo │         │Preparo │
-         └────────┘          └────────┘         └────────┘
-```
+<p align="center">
+	<img src="./Mediator.png" alt="Diagrama de Classe - Mediator" width="800"/>
+</p>
 
 ## 🚀 Funcionalidades <a name="funcionalidades"></a>
 ### Sistema de Bar e Cafeteria
