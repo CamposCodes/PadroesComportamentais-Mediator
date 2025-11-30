@@ -34,7 +34,7 @@ Implementação do padrão **Mediator** aplicada a um sistema de bar e cafeteria
 - Roteamento inteligente de pedidos para o setor correto
 - Interface interativa com visualização em tempo real
 
-Também há uma interface web de demonstração interativa incluída: [Interface de Demonstração](./index.html)
+Também há uma interface web de demonstração interativa incluída: [Interface de Demonstração](https://camposcodes.github.io/PadroesComportamentais-Mediator/)
 <p align="center">
 	<img src="./screenshot.png" alt="Captura da interface - Demonstração Mediator" width="900" />
 </p>
