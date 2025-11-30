@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Padrão Mediator - Sistema de Bar e Cafeteria</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .funcionarios {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .funcionario {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 5px solid #ffd700;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .funcionario:hover {
+            transform: translateX(10px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .funcionario.ativo {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-left-color: #ff6b6b;
+        }
+
+        .funcionario-nome {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .funcionario-tipo {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .mediador-area {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .mediador-box {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            border: 3px solid #ff6b00;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            min-width: 200px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 10;
+        }
+
+        .mediador-box h3 {
+            color: #ff6b00;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+
+        .mediador-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .mediador-status {
+            color: #333;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .setores {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .setor {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border-right: 5px solid #ffd700;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .setor.ativo {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-right-color: #ff6b6b;
+            transform: scale(1.05);
+        }
+
+        .setor-nome {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .setor-status {
+            font-size: 0.85em;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .setor-tempo {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .setas-conexao {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            top: 0;
+            left: 0;
+        }
+
+        .seta {
+            position: absolute;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, transparent);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .seta.ativa {
+            opacity: 1;
+            animation: fluxo 1s ease-in-out infinite;
+        }
+
+        @keyframes fluxo {
+            0% {
+                background: linear-gradient(90deg, #667eea, transparent);
+                width: 0;
+            }
+            50% {
+                width: 100%;
+                background: linear-gradient(90deg, #667eea, #764ba2);
+            }
+            100% {
+                width: 100%;
+                background: linear-gradient(90deg, transparent, #764ba2);
+            }
+        }
+
+        .pedidos-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 40px;
+        }
+
+        .pedidos-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .solicitacoes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .solicitacao-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+
+        .solicitacao-form label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+
+        .solicitacao-form select,
+        .solicitacao-form input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.95em;
+            transition: border-color 0.3s ease;
+        }
+
+        .solicitacao-form select:focus,
+        .solicitacao-form input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
+        }
+
+        .btn-enviar {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-enviar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-enviar:active {
+            transform: translateY(0);
+        }
+
+        .log-pedidos {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            border-left: 5px solid #38ef7d;
+        }
+
+        .log-titulo {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .log-item {
+            background: white;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+            font-size: 0.9em;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .log-item.sucesso {
+            border-left-color: #38ef7d;
+            background: #f0fdf4;
+        }
+
+        .log-item.processando {
+            border-left-color: #ffd700;
+            background: #fffbf0;
+        }
+
+        .log-item.erro {
+            border-left-color: #f5576c;
+            background: #fef2f2;
+        }
+
+        .log-timestamp {
+            color: #999;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+
+        .log-mensagem {
+            color: #333;
+            margin-top: 5px;
+            font-family: 'Courier New', monospace;
+            word-break: break-word;
+        }
+
+        .stats-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .stats-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 0.95em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+            font-weight: normal;
+        }
+
+        .stat-card .numero {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .footer p {
+            opacity: 0.9;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .padroes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .padrao-item {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 8px;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .padrao-item strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 1200px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 2em;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.5em;
+            }
+
+            .solicitacoes {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .scroll-area {
+            scrollbar-width: thin;
+            scrollbar-color: #667eea #f0f0f0;
+        }
+
+        .scroll-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scroll-area::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+
+        .scroll-area::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .scroll-area::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍹 Padrão Mediator - Sistema de Bar e Cafeteria</h1>
+            <p>Visualização interativa da comunicação centralizada entre garçons e setores de preparo</p>
+        </header>
+
+        <div class="content">
+            <div class="panel">
+                <h2>👨‍💼 Garçons</h2>
+                <div class="funcionarios">
+                    <div class="funcionario" data-funcionario="garcom1">
+                        <div class="funcionario-nome">Garçom João</div>
+                        <div class="funcionario-tipo">ID: 001</div>
+                    </div>
+                    <div class="funcionario" data-funcionario="garcom2">
+                        <div class="funcionario-nome">Garçom Maria</div>
+                        <div class="funcionario-tipo">ID: 002</div>
+                    </div>
+                    <div class="funcionario" data-funcionario="garcom3">
+                        <div class="funcionario-nome">Garçom Pedro</div>
+                        <div class="funcionario-tipo">ID: 003</div>
+                    </div>
+                    <div class="funcionario" data-funcionario="garcom4">
+                        <div class="funcionario-nome">Garçom Ana</div>
+                        <div class="funcionario-tipo">ID: 004</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel mediador-area">
+                <h2 style="position: absolute; top: 0; left: 0; right: 0;">🎯 Mediador</h2>
+                <svg class="setas-conexao" style="margin-top: 60px;">
+                    <line class="seta" id="seta-esq-sup" x1="0" y1="20" x2="100%" y2="20"/>
+                    <line class="seta" id="seta-esq-meio" x1="0" y1="100" x2="100%" y2="100"/>
+                    <line class="seta" id="seta-esq-inf" x1="0" y1="180" x2="100%" y2="180"/>
+                </svg>
+                <div class="mediador-box">
+                    <div class="mediador-icon">🏢</div>
+                    <h3>CozinhaBar</h3>
+                    <div class="mediador-status">Centralizando pedidos...</div>
+                </div>
+                <svg class="setas-conexao" style="margin-top: 60px;">
+                    <line class="seta" id="seta-dir-sup" x1="0" y1="20" x2="100%" y2="20"/>
+                    <line class="seta" id="seta-dir-meio" x1="0" y1="100" x2="100%" y2="100"/>
+                    <line class="seta" id="seta-dir-inf" x1="0" y1="180" x2="100%" y2="180"/>
+                </svg>
+            </div>
+
+            <div class="panel">
+                <h2>⚙️ Setores</h2>
+                <div class="setores">
+                    <div class="setor" data-setor="bar">
+                        <div class="setor-nome">🍺 Bar</div>
+                        <div class="setor-status" id="status-bar">Disponível</div>
+                        <div class="setor-tempo">⏱️ 3 min</div>
+                    </div>
+                    <div class="setor" data-setor="cozinha">
+                        <div class="setor-nome">🍳 Cozinha</div>
+                        <div class="setor-status" id="status-cozinha">Disponível</div>
+                        <div class="setor-tempo">⏱️ 15 min</div>
+                    </div>
+                    <div class="setor" data-setor="barista">
+                        <div class="setor-nome">☕ Barista</div>
+                        <div class="setor-status" id="status-barista">Disponível</div>
+                        <div class="setor-tempo">⏱️ 5 min</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pedidos-section">
+            <h2>📝 Sistema de Pedidos</h2>
+            <div class="solicitacoes">
+                <div class="solicitacao-form">
+                    <label for="garcom-select">Selecione o Garçom:</label>
+                    <select id="garcom-select">
+                        <option value="">-- Escolha um garçom --</option>
+                        <option value="garcom1">Garçom João</option>
+                        <option value="garcom2">Garçom Maria</option>
+                        <option value="garcom3">Garçom Pedro</option>
+                        <option value="garcom4">Garçom Ana</option>
+                    </select>
+
+                    <label for="tipo-pedido">Tipo de Pedido:</label>
+                    <select id="tipo-pedido">
+                        <option value="">-- Selecione o tipo --</option>
+                        <option value="bebida-alcoolica">Bebida Alcoólica (Bar)</option>
+                        <option value="alimento">Alimento (Cozinha)</option>
+                        <option value="bebida-especial">Bebida Especial (Barista)</option>
+                    </select>
+
+                    <label for="descricao-pedido">Descrição do Pedido:</label>
+                    <input type="text" id="descricao-pedido" placeholder="Ex: Cerveja gelada, Feijoada, Cappuccino...">
+
+                    <button class="btn-enviar" onclick="enviarPedido()">📤 Enviar Pedido</button>
+                </div>
+
+                <div class="log-pedidos scroll-area">
+                    <div class="log-titulo">📋 Log de Pedidos</div>
+                    <div id="log-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <h2>📊 Estatísticas do Sistema</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total de Pedidos</h3>
+                    <div class="numero" id="total-pedidos">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Pedidos Processados</h3>
+                    <div class="numero" id="pedidos-processados">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Pedidos em Fila</h3>
+                    <div class="numero" id="pedidos-fila">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Tempo Médio</h3>
+                    <div class="numero" id="tempo-medio">0s</div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <div class="padroes">
+                    <div class="padrao-item">
+                        <strong>🎯 Padrão: Mediator</strong>
+                        Centraliza a comunicação entre múltiplos objetos (garçons e setores).
+                    </div>
+                    <div class="padrao-item">
+                        <strong>🔄 Padrão: Singleton</strong>
+                        CozinhaBar, Bar, Cozinha e Barista existem em única instância.
+                    </div>
+                    <div class="padrao-item">
+                        <strong>📋 Vantagens</strong>
+                        Desacoplamento, controle centralizado, fácil manutenção.
+                    </div>
+                    <div class="padrao-item">
+                        <strong>⚠️ Quando Usar</strong>
+                        Sistemas com múltiplos objetos que precisam se comunicar.
+                    </div>
+                </div>
+                <p style="margin-top: 20px;">
+                    DCC078 - ASPECTOS AVANÇADOS EM ENGENHARIA DE SOFTWARE<br>
+                    Padrão de Design: Mediator | Contexto: Sistema de Bar e Cafeteria
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class CozinhaBar {
+            constructor() {
+                this.pedidos = [];
+                this.pedidoProcessando = null;
+            }
+
+            receberPedidoBebidaAlcoolica(garcom, descricao) {
+                const pedido = {
+                    id: Date.now(),
+                    garcom: garcom,
+                    tipo: 'bebida-alcoolica',
+                    setor: 'Bar',
+                    descricao: descricao,
+                    timestamp: new Date(),
+                    status: 'processando'
+                };
+                this.pedidos.push(pedido);
+                return this.processarPedido(pedido, 'bar');
+            }
+
+            receberPedidoAlimento(garcom, descricao) {
+                const pedido = {
+                    id: Date.now(),
+                    garcom: garcom,
+                    tipo: 'alimento',
+                    setor: 'Cozinha',
+                    descricao: descricao,
+                    timestamp: new Date(),
+                    status: 'processando'
+                };
+                this.pedidos.push(pedido);
+                return this.processarPedido(pedido, 'cozinha');
+            }
+
+            receberPedidoBebistaEspecial(garcom, descricao) {
+                const pedido = {
+                    id: Date.now(),
+                    garcom: garcom,
+                    tipo: 'bebida-especial',
+                    setor: 'Barista',
+                    descricao: descricao,
+                    timestamp: new Date(),
+                    status: 'processando'
+                };
+                this.pedidos.push(pedido);
+                return this.processarPedido(pedido, 'barista');
+            }
+
+            processarPedido(pedido, setor) {
+                const setorObj = setoresInstancias[setor];
+                const resposta = setorObj.receberPedido(pedido.descricao);
+                return {
+                    mediador: "Cozinha/Bar recebeu o pedido.\nEncaminhando para o " + pedido.setor + " conforme pedido a seguir.",
+                    resposta: resposta,
+                    pedido: pedido,
+                    tempoEstimado: setorObj.obterTempoEstimado()
+                };
+            }
+
+            getTotalPedidos() {
+                return this.pedidos.length;
+            }
+
+            getPedidosProcessados() {
+                return this.pedidos.filter(p => p.status === 'concluido').length;
+            }
+        }
+
+        class Setor {
+            constructor(nome, tempoEstimado) {
+                this.nome = nome;
+                this.tempoEstimado = tempoEstimado;
+                this.disponivel = true;
+            }
+
+            receberPedido(descricao) {
+                return `O ${this.nome} está preparando: ${descricao}`;
+            }
+
+            estaDisponivel() {
+                return this.disponivel;
+            }
+
+            obterTempoEstimado() {
+                return this.tempoEstimado;
+            }
+
+            setDisponivel(disponivel) {
+                this.disponivel = disponivel;
+            }
+        }
+
+        const mediador = new CozinhaBar();
+        const setoresInstancias = {
+            'bar': new Setor('Bar', 3),
+            'cozinha': new Setor('Cozinha', 15),
+            'barista': new Setor('Barista', 5)
+        };
+
+        let pedidosPorSetor = {
+            'bar': 0,
+            'cozinha': 0,
+            'barista': 0
+        };
+
+        let temposResposta = [];
+
+        function enviarPedido() {
+            const garcomSelect = document.getElementById('garcom-select').value;
+            const tipoPedido = document.getElementById('tipo-pedido').value;
+            const descricao = document.getElementById('descricao-pedido').value;
+
+            if (!garcomSelect || !tipoPedido || !descricao) {
+                alert('⚠️ Preencha todos os campos!');
+                return;
+            }
+
+            const garcomNome = document.querySelector(`[data-funcionario="${garcomSelect}"] .funcionario-nome`).textContent;
+
+            animarGarcom(garcomSelect);
+
+            let resultado;
+            const tempoInicio = Date.now();
+
+            if (tipoPedido === 'bebida-alcoolica') {
+                resultado = mediador.receberPedidoBebidaAlcoolica(garcomNome, descricao);
+                pedidosPorSetor['bar']++;
+                animarSetor('bar');
+                animarSeta('dir-sup');
+            } else if (tipoPedido === 'alimento') {
+                resultado = mediador.receberPedidoAlimento(garcomNome, descricao);
+                pedidosPorSetor['cozinha']++;
+                animarSetor('cozinha');
+                animarSeta('dir-meio');
+            } else if (tipoPedido === 'bebida-especial') {
+                resultado = mediador.receberPedidoBebistaEspecial(garcomNome, descricao);
+                pedidosPorSetor['barista']++;
+                animarSetor('barista');
+                animarSeta('dir-inf');
+            }
+
+            const tempoResposta = Date.now() - tempoInicio;
+            temposResposta.push(tempoResposta);
+
+            adicionarAoLog(garcomNome, resultado, tipoPedido);
+            atualizarEstatisticas();
+
+            document.getElementById('descricao-pedido').value = '';
+            document.getElementById('garcom-select').value = '';
+            document.getElementById('tipo-pedido').value = '';
+        }
+
+        function animarGarcom(garcomId) {
+            const garcom = document.querySelector(`[data-funcionario="${garcomId}"]`);
+            garcom.classList.add('ativo');
+            setTimeout(() => garcom.classList.remove('ativo'), 600);
+        }
+
+        function animarSetor(setorId) {
+            const setor = document.querySelector(`[data-setor="${setorId}"]`);
+            setor.classList.add('ativo');
+            setTimeout(() => setor.classList.remove('ativo'), 1000);
+        }
+
+        function animarSeta(setaId) {
+            const seta = document.getElementById(`seta-${setaId}`);
+            seta.classList.add('ativa');
+            setTimeout(() => seta.classList.remove('ativa'), 1000);
+        }
+
+        function adicionarAoLog(garcom, resultado, tipo) {
+            const logContainer = document.getElementById('log-container');
+            const timestamp = new Date().toLocaleTimeString('pt-BR');
+
+            const logItem = document.createElement('div');
+            logItem.className = `log-item sucesso`;
+            logItem.innerHTML = `
+                <strong>👨‍💼 ${garcom}</strong><br>
+                <div class="log-mensagem">
+                    <strong>Tipo:</strong> ${getTipoPedidoLabel(tipo)}<br>
+                    <strong>Pedido:</strong> ${resultado.pedido.descricao}<br>
+                    <strong>Setor:</strong> ${resultado.pedido.setor}<br>
+                    <strong>Tempo Estimado:</strong> ${resultado.tempoEstimado} minutos
+                </div>
+                <div class="log-timestamp">${timestamp}</div>
+            `;
+
+            logContainer.insertBefore(logItem, logContainer.firstChild);
+
+            while (logContainer.children.length > 11) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+
+        function getTipoPedidoLabel(tipo) {
+            const labels = {
+                'bebida-alcoolica': '🍺 Bebida Alcoólica',
+                'alimento': '🍳 Alimento',
+                'bebida-especial': '☕ Bebida Especial'
+            };
+            return labels[tipo] || tipo;
+        }
+
+        function atualizarEstatisticas() {
+            const totalPedidos = mediador.getTotalPedidos();
+            const processados = mediador.getPedidosProcessados();
+            const fila = totalPedidos - processados;
+            const mediaTempos = temposResposta.length > 0 
+                ? Math.round(temposResposta.reduce((a, b) => a + b, 0) / temposResposta.length)
+                : 0;
+
+            document.getElementById('total-pedidos').textContent = totalPedidos;
+            document.getElementById('pedidos-processados').textContent = processados;
+            document.getElementById('pedidos-fila').textContent = fila;
+            document.getElementById('tempo-medio').textContent = mediaTempos + 'ms';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            atualizarEstatisticas();
+            console.log('🎯 Padrão Mediator Inicializado');
+            console.log('Mediador:', mediador);
+            console.log('Setores:', setoresInstancias);
+        });
+
+        document.getElementById('descricao-pedido').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                enviarPedido();
+            }
+        });
+    </script>
+</body>
+</html>
